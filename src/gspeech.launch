@@ -1,3 +1,3 @@
 <launch>
-  <node  name="gspeech" pkg="gspeech" type="gspeech.py" args="AIzaSyCr3c2A2bS9cvVGb3kG2VxUJGIbQZxDRWE" />
+  <node  name="gspeech" pkg="gspeech" type="gspeech.py" args="$(env GOOGLE_API_KEY)" />
 </launch>

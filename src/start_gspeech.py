@@ -6,40 +6,55 @@
 # pin l_pin is a LED indicator for when gpseech script is running 
 
 import mraa
-import time
 import subprocess
-import os, sys
 import rospy
 
 # pin for button
 b_pin = 35
+
 # pin for LED 
 l_pin = 100
 
 # initialize GPIO pins 
 button = mraa.Gpio(b_pin)
 led = mraa.Gpio(l_pin)
-print "Setting up GPIO pins"
+print("Setting up GPIO pins")
 
 # set button to input and LED to output 
 button.dir(mraa.DIR_IN)
 led.dir(mraa.DIR_OUT)
-print "Setting up pin direction"
+print("Setting up pin direction")
 
-# Set initial value of button to be pulled low
+# set initial value of button to be pulled low
 button.mode(mraa.MODE_PULLDOWN)
-print "Setting button pin mode to pulldown"
+print("Setting button pin mode to pulldown")
+
+# declare gspeech cmd variable 
+gcmd = None 
+
+# assert LED is off
+led.write(0)
 
 # continuously read the state of the button
 while True:
-    if button.read() == 1: #assert script is not running
+    if button.read() == 1 and not(hasattr('gcmd', 'pid')): #assert script is not already running
         print("Button was pressed, initiating gspeech node...")
-        os.system("roslaunch gspeech gspeech.launch")
-        # 10 second delay before killing script 
-        led.write(1)
-    else:
-        print("Button was not pressed")
+        gcmd = subprocess.Popen(['roslaunch', 'gspeech', 'gspeech.launch'])
+       
+        # light indicating gspeech node is running
+        led.write(1) 
+
+        # record speech for 10 seconds then terminate node
+        rospy.sleep(15)
+        print("Done recording speech sample, terminating gspeech node..")
+        gcmd.terminate()
         led.write(0)
-    time.sleep(3)
+        
+    elif button.read() == 1 and gcmd.returncode == None: 
+        print("Terminating gspeech node..")
+        gcmd.terminate()
+        led.write(0)
+
+    rospy.sleep(0.2)
 
 
